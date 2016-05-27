@@ -142,20 +142,19 @@ labyFunc = function(){
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
   /*                Fonction Affichage                    */
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  // afficherMur = function(){
+  //
+  // }
+  //
   afficherLaby = function() {
     for (var i=0; i<coordTab.length; i++) {
-      var source = laby[coordTab[i].line][coordTab[i].col];
+      let line = coordTab[i].line;
+      let col = coordTab[i].col;
+      var source = laby[line][coordTab[i].col];
       if (source.v==1) {
         context.fillStyle = 'rgb(0,255,0)';
         context.fillRect(coordTab[i].col*COTE, coordTab[i].line*COTE, COTE, COTE);
       }
-      //if(source.v>=1) context.fillStyle = 'rgb(0,255,0)';
-      // // affichage des cases :
-      // if (source.p!=0) { // si passage à la souris
-      //   if (source.v==1) { // si solution
-      //     context.fillStyle = 'rgb(0,255,0)';
-      //   } else context.fillStyle = 'rgb('+AIDE+',255,'+AIDE+')';
-      // } else context.fillStyle = 'rgb(255,255,255)';
 
       // affichage des murs :
       for (var k=0; k<source.closed.length; k++) {
@@ -170,6 +169,10 @@ labyFunc = function(){
         }
         context.stroke();
       }
+
+      //var rightCellWall = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
+      //var downCellWall = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
+
     }
 
     // affichage du contour du labyrinthe :
@@ -197,8 +200,8 @@ labyFunc = function(){
   /* On réinitiliase les valeurs */
       checkRight = false;
       checkDown = false;
-      var line = coordTab[i].line;
-      var col = coordTab[i].col;
+      let line = coordTab[i].line;
+      let col = coordTab[i].col;
   /* On vérifie si les murs du bas et droite sont ouverts */
       var rightCell = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
       var downCell = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
@@ -227,31 +230,7 @@ resolveLaby = function(){
   laby[0][0].v = 1;
   queue = [ {l:0, c:0} ]
 
-  // anim = function(loc_source){
-  //   for (var k=0; k<loc_source.opened.length; k++) {
-  //     setTimeout(function() {
-  //       target = loc_source.opened[k];
-  //       if (target.v==0) {
-  //         target.v = loc_source.v+1;
-  //         // context.fillStyle = 'rgb(0,150,0)';
-  //         // context.fillRect(source.colonne*COTE, source.ligne*COTE, COTE, COTE);
-  //         queue.push({l:target.ligne, c:target.colonne});
-  //         context.fillStyle = 'rgb(0,255,0)';
-  //         context.fillRect(target.colonne*COTE, target.ligne*COTE, COTE, COTE);
-  //       }
-  //     }, 50*(k+1));
-  //   }
-  // }
-  //
-  // context.fillRect(coordTab[i].col*COTE, coordTab[i].line*COTE, COTE, COTE);
-  function animCell(loc_target, index) {
-    setTimeout(function() {
-      context.fillStyle = 'rgb(0,255,0)';
-      context.fillRect(loc_target.colonne*COTE, loc_target.ligne*COTE, COTE, COTE);
-    }, 50*(index+1));
-  }
-
-  while (queue.length!=0) {
+  var anim1 = setInterval(function(){
     // coordonnées de la case à tester :
     coords = queue.shift();
     source = laby[coords.l][coords.c];
@@ -261,26 +240,36 @@ resolveLaby = function(){
       if (target.v==0) {
         target.v = source.v+1;
         queue.push({l:target.ligne, c:target.colonne});
+        context.fillStyle = 'rgb(255,255,0)';
+        context.fillRect(target.colonne*COTE-2, target.ligne*COTE-2, COTE-2, COTE-2);
       }
     }
-  }
-
-  var source = laby[NB_LINE-1][NB_COL-1]; // source est l'étape courante du trajet solution
-  var distance = source.v;
-  source.v = 1;
-  while (distance!=1) {
-    for (var k=0; k<source.opened.length; k++) {
-      // on cherche à ce que target soit l'étape précédente du trajet solution
-      target = source.opened[k];
-      if (target.v==distance-1) {
-        distance--;
-        target.v = 1;
-        source = target;
-        break;
-      }
+    console.log(queue);
+    console.log(queue.length);
+    if(queue.length == 0) {
+      console.log('HELLO');
+      clearInterval(anim1);
+      var source = laby[NB_LINE-1][NB_COL-1]; // source est l'étape courante du trajet solution
+      var distance = source.v;
+      source.v = 1;
+      var anim2 = setInterval(function(){
+        console.log('titi');
+        for (var k=0; k<source.opened.length; k++) {
+          // on cherche à ce que target soit l'étape précédente du trajet solution
+          target = source.opened[k];
+          if (target.v==distance-1) {
+            distance--;
+            target.v = 1;
+            source = target;
+            context.fillStyle = 'rgb(0,255,0)';
+            context.fillRect(target.colonne*COTE, target.ligne*COTE, COTE, COTE);
+            break;
+          }
+        }
+        if(distance==1) clearInterval(anim2);
+      }, 100);
     }
-  }
-  afficherLaby();
+  }, 50);
 }
 
 //Résoudre le laby
