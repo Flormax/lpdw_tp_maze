@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+ <title>Laby</title>
+ <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+ <meta name="description" content="TP labyrinthe LPDW" />
+</head>
+<body>
+ <canvas id="labyrinthe">
+   <span class="ko"><canvas> non supportée !</span>
+ </canvas>
+ <br/>
+ <form id='formGen' method="post" action="">
+    Colonne: <input id='nbrCol' type="number" min="0" step="1"/>
+    Line: <input id='nbrLine' type="number" min="0" step="1"/><br/>
+   <input id='submitGen' type="button" value="Generate"/>
+ </form>
+ <form id='formLoad' method="post" action="">
+   <input id='inputJson' type="text"/>
+   <input id='submitJson' type="button" value="import"/>
+ </form>
+ <button id="export">Export</button>
+ <button id="resolve">Resolve</button>
+ <script type="text/javascript" src="index.js"></script>
+</body>
+</html>
