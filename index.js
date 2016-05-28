@@ -17,7 +17,7 @@ var coordTab = []; //Look Up Table for coordinates
 var laby = [];
 var loadMode = false;
 
-//Génrer un laby aléatoirement de taille choisie
+//Générer un laby aléatoirement de taille choisie
 generateBtn.addEventListener('click', function(){
   coordTab = [];
   laby = [];
@@ -142,40 +142,37 @@ labyFunc = function(){
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
   /*                Fonction Affichage                    */
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-  // afficherMur = function(){
-  //
-  // }
-  //
-  afficherLaby = function() {
+  afficherMur = function(loc_line, loc_col){
+    let rightCellWall = laby[loc_line][loc_col].closed.filter(function(x) {return x==laby[loc_line][Math.min(loc_col+1, NB_COL-1)]});
+    let downCellWall = laby[loc_line][loc_col].closed.filter(function(x) {return x==laby[Math.min(loc_line+1, NB_LINE -1)][loc_col]});
+    let checkRight = typeof rightCellWall[0] !== 'undefined';
+    let checkDown = typeof downCellWall[0] !== 'undefined';
+    context.beginPath();
+    if (checkRight) {
+      context.moveTo(COTE*Math.max(rightCellWall[0].colonne,loc_col),COTE*loc_line);
+      context.lineTo(COTE*Math.max(rightCellWall[0].colonne,loc_col),COTE*(loc_line+1));
+    }
+    if (checkDown) {
+      context.moveTo(COTE*loc_col,COTE*Math.max(downCellWall[0].ligne,loc_line));
+      context.lineTo(COTE*(loc_col+1),COTE*Math.max(downCellWall[0].ligne,loc_line));
+    }
+    context.stroke();
+  }
+  
+  afficherGrille = function(){
+    context.beginPath();
     for (var i=0; i<coordTab.length; i++) {
       let line = coordTab[i].line;
       let col = coordTab[i].col;
-      var source = laby[line][coordTab[i].col];
-      if (source.v==1) {
-        context.fillStyle = 'rgb(0,255,0)';
-        context.fillRect(coordTab[i].col*COTE, coordTab[i].line*COTE, COTE, COTE);
-      }
-
-      // affichage des murs :
-      for (var k=0; k<source.closed.length; k++) {
-        t = source.closed[k]; // t pour target
-        context.beginPath();
-        if (t.ligne==coordTab[i].line) {
-          context.moveTo(COTE*Math.max(t.colonne,coordTab[i].col),COTE*coordTab[i].line);
-          context.lineTo(COTE*Math.max(t.colonne,coordTab[i].col),COTE*(coordTab[i].line+1));
-        } else if (t.colonne==coordTab[i].col) {
-          context.moveTo(COTE*coordTab[i].col,COTE*Math.max(t.ligne,coordTab[i].line));
-          context.lineTo(COTE*(coordTab[i].col+1),COTE*Math.max(t.ligne,coordTab[i].line));
-        }
-        context.stroke();
-      }
-
-      //var rightCellWall = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
-      //var downCellWall = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
-
+      context.moveTo(line*COTE,col*COTE);
+      context.lineTo(line*COTE+COTE,col*COTE);
+      context.moveTo(line*COTE,col*COTE);
+      context.lineTo(line*COTE,col*COTE+COTE);
     }
+    context.stroke();
+  }
 
-    // affichage du contour du labyrinthe :
+  afficherContour = function(){
     context.beginPath();
     context.moveTo(0,0);
     context.lineTo(WIDTH,0);
@@ -185,26 +182,41 @@ labyFunc = function(){
     context.lineTo(0,0+30);
     context.stroke();
   }
-  afficherLaby();
+
+  colorerCase = function(color, line, col){
+    context.fillStyle = color;
+    context.clearRect(col*COTE+1, line*COTE+1, COTE-2, COTE-2);
+    context.fillRect(col*COTE+1, line*COTE+1, COTE-2, COTE-2);
+  }
+
+  afficherLaby = function(x) {
+    let i = 0;
+    var anim0 = setInterval(function(){
+      afficherMur(coordTab[i].line, coordTab[i].col);
+      afficherContour();
+      i++;
+      if(i==coordTab.length) clearInterval(anim0);
+    }, x)
+  }
+  afficherContour();
+  afficherLaby(10);
 }
 
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
   /*            Export                                    */
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-  var listCells = new Array();
-  var checkRight;
-  var checkDown;
 
   var exportLaby = function(){
+    let listCells = new Array();
     for (var i=0; i<coordTab.length; i++) {
   /* On réinitiliase les valeurs */
-      checkRight = false;
-      checkDown = false;
+      let checkRight = false;
+      let checkDown = false;
       let line = coordTab[i].line;
       let col = coordTab[i].col;
   /* On vérifie si les murs du bas et droite sont ouverts */
-      var rightCell = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
-      var downCell = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
+      let rightCell = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
+      let downCell = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
       checkRight = typeof rightCell[0] !== 'undefined';
       checkDown = typeof downCell[0] !== 'undefined';
   /* On l'ajoute  à la liste */
@@ -234,26 +246,24 @@ resolveLaby = function(){
     // coordonnées de la case à tester :
     coords = queue.shift();
     source = laby[coords.l][coords.c];
+    colorerCase('rgba(200,255,255,0.1)', source.ligne, source.colonne);
     var cpt = 0;
     for (var k=0; k<source.opened.length; k++) {
       target = source.opened[k];
+      colorerCase('rgba(255,255,255,0.1)', target.ligne, target.colonne);
       if (target.v==0) {
         target.v = source.v+1;
         queue.push({l:target.ligne, c:target.colonne});
-        context.fillStyle = 'rgb(255,255,0)';
-        context.fillRect(target.colonne*COTE-2, target.ligne*COTE-2, COTE-2, COTE-2);
+        colorerCase('rgba(255,255,255,0.3)', target.ligne, target.colonne);
       }
     }
-    console.log(queue);
-    console.log(queue.length);
     if(queue.length == 0) {
-      console.log('HELLO');
       clearInterval(anim1);
-      var source = laby[NB_LINE-1][NB_COL-1]; // source est l'étape courante du trajet solution
+      var source = laby[NB_LINE-1][NB_COL-1];
+      colorerCase('rgba(0,255,0,0.4)',NB_LINE-1,NB_COL-1); // source est l'étape courante du trajet solution
       var distance = source.v;
       source.v = 1;
       var anim2 = setInterval(function(){
-        console.log('titi');
         for (var k=0; k<source.opened.length; k++) {
           // on cherche à ce que target soit l'étape précédente du trajet solution
           target = source.opened[k];
@@ -261,12 +271,15 @@ resolveLaby = function(){
             distance--;
             target.v = 1;
             source = target;
-            context.fillStyle = 'rgb(0,255,0)';
-            context.fillRect(target.colonne*COTE, target.ligne*COTE, COTE, COTE);
+            colorerCase('rgba(0,255,0,0.4)', target.ligne, target.colonne);
             break;
           }
         }
-        if(distance==1) clearInterval(anim2);
+        console.log(distance);
+        if(distance==1){
+          colorerCase('rgba(0,255,0,0.4)', 0, 0);
+          clearInterval(anim2);
+        }
       }, 100);
     }
   }, 50);
