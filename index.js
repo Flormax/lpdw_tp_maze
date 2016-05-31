@@ -7,6 +7,10 @@ var resolveBtn = document.getElementById('resolve');
 var genrateForm = document.getElementById('formGen');
 var loadForm = document.getElementById('formLoad');
 var jsonInput =  document.getElementById('inputJson');
+var jsonDiv =  document.getElementById('exportJson');
+var error = document.getElementById('errorMessage');
+var exportDiv = document.getElementById('displayExport');
+var jsonFile = document.getElementById('fileJson');
 
 var NB_COL = 0;
 var NB_LINE = 0;
@@ -21,18 +25,31 @@ var loadMode = false;
 generateBtn.addEventListener('click', function(){
   coordTab = [];
   laby = [];
+  error.innerHTML =""
   NB_COL = document.getElementById('nbrCol').value;
   NB_LINE = document.getElementById('nbrLine').value;
+  if(NB_COL < 2 || NB_COL > 130 || NB_LINE < 2 || NB_LINE > 130){
+    return error.innerHTML ="Les valeurs du labyrinthe doivent etre comprises entre 2 et 130 !";
+  }
   for(i=0; i<NB_LINE*NB_COL; i++){
-    coordTab[i] = {'line': Math.trunc(i/NB_COL) ,'col': i - (NB_COL * Math.trunc(i/NB_COL))};
+  coordTab[i] = {'line': Math.trunc(i/NB_COL) ,'col': i - (NB_COL * Math.trunc(i/NB_COL))};
   }
   loadMode = false;
-  labyFunc();
+  labyFunc(); 
+
+
 }, false);
 
 //Générer un laby avec un json
 loadBtn.addEventListener('click', function(){
   jsonL = jsonInput.value;
+  error.innerHTML = "";
+//On vérifie que le json est valide
+  valideJson = JSON.parse(jsonL);
+  if(!valideJson.cells || !valideJson.width || !valideJson.height){
+    return error.innerHTML = "Le json n'est pas valide";
+  }
+
   coordTab = [];
   laby = [];
   var jsonTemp = jsonL.replace(/ /g, "");
@@ -205,27 +222,38 @@ labyFunc = function(){
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
   /*            Export                                    */
   /*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+  var listCells = new Array();
+  var checkRight;
+  var checkDown;
 
   var exportLaby = function(){
-    let listCells = new Array();
     for (var i=0; i<coordTab.length; i++) {
   /* On réinitiliase les valeurs */
-      let checkRight = false;
-      let checkDown = false;
-      let line = coordTab[i].line;
-      let col = coordTab[i].col;
+      checkRight = false;
+      checkDown = false;
+      var line = coordTab[i].line;
+      var col = coordTab[i].col;
   /* On vérifie si les murs du bas et droite sont ouverts */
-      let rightCell = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
-      let downCell = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
+      var rightCell = laby[line][col].opened.filter(function(x) {return x==laby[line][Math.min(col+1, NB_COL-1)]});
+      var downCell = laby[line][col].opened.filter(function(x) {return x==laby[Math.min(line+1, NB_LINE -1)][col]});
+
       checkRight = typeof rightCell[0] !== 'undefined';
       checkDown = typeof downCell[0] !== 'undefined';
+
   /* On l'ajoute  à la liste */
       listCells.push({'down': checkDown, 'right': checkRight});
     }
   /* On transforme le tableau d'objet en json */
-      var exportLabyJson =  {'cells': listCells , 'height': NB_LINE, 'width': NB_COL};
-      var myJsonString = JSON.stringify(exportLabyJson);
-      console.log(myJsonString);
+      var exportLabyJson = JSON.stringify({'cells': listCells , 'height': NB_LINE, 'width': NB_COL});
+      jsonDiv.innerHTML = exportLabyJson;
+
+      var data = new Blob([exportLabyJson], {type: 'application/json'});
+      var textFile = window.URL.createObjectURL(data);
+
+      var link = document.getElementById('downloadlink');
+      link.href = textFile;
+      link.download = "Maze"+NB_COL+"x"+NB_LINE+".json";
+      exportDiv.style.display = 'block';
   }
 
   exportBtn.addEventListener('click', exportLaby, false);
@@ -236,6 +264,10 @@ labyFunc = function(){
 
 resolveLaby = function(){
   // on remet à 0 les valeurs v :
+  if(coordTab == ""){
+    return error.innerHTML = "Vous devez generer un labyrinthe avant de le resoudre ";
+  }
+  console.log(canvas);
   for (var i=0; i<coordTab.length; i++) {
     laby[coordTab[i].line][coordTab[i].col].v = 0;
   }
@@ -246,15 +278,15 @@ resolveLaby = function(){
     // coordonnées de la case à tester :
     coords = queue.shift();
     source = laby[coords.l][coords.c];
-    colorerCase('rgba(200,255,255,0.1)', source.ligne, source.colonne);
+    colorerCase('rgba(199,199,199,0.6)', source.ligne, source.colonne);
     var cpt = 0;
     for (var k=0; k<source.opened.length; k++) {
       target = source.opened[k];
-      colorerCase('rgba(255,255,255,0.1)', target.ligne, target.colonne);
+      colorerCase('rgba(199,199,199,0.3)', target.ligne, target.colonne);
       if (target.v==0) {
         target.v = source.v+1;
         queue.push({l:target.ligne, c:target.colonne});
-        colorerCase('rgba(255,255,255,0.3)', target.ligne, target.colonne);
+        colorerCase('rgba(255,255,255,0.5)', target.ligne, target.colonne);
       }
     }
     if(queue.length == 0) {
@@ -275,7 +307,6 @@ resolveLaby = function(){
             break;
           }
         }
-        console.log(distance);
         if(distance==1){
           colorerCase('rgba(0,255,0,0.4)', 0, 0);
           clearInterval(anim2);
@@ -285,5 +316,23 @@ resolveLaby = function(){
   }, 50);
 }
 
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*            Lire Le fichier Json                      */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+var openFile = function(event) {
+  var filename = jsonFile.value.split(".");
+  error.innerHTML = "";
+  if(filename[filename.length-1] != "json"){
+    return error.innerHTML ="Vous ne pouvez importer que des fichiers .json";
+  }
+  var input = event.target;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var text = reader.result;
+    jsonInput.value = text;
+  };
+  reader.readAsText(input.files[0]);
+};
 //Résoudre le laby
 resolveBtn.addEventListener('click', resolveLaby, false);

@@ -10,21 +10,33 @@
 </head>
 <body>
   <h1>Crazy Maze</h1>
-  by Remi and Max
-  <form id='formLoad' method="post" action="">
-    <input id='inputJson' type="text"/>
-    <input id='submitJson' type="button" value="import"/>
-  </form>
+  <div>by Remi and Max</div>
   <form id='formGen' method="post" action="">
-    Colonne: <input id='nbrCol' type="number" min="0" step="1"/>
-    Line: <input id='nbrLine' type="number" min="0" step="1"/>
-   <input id='submitGen' type="button" value="Generate"/>
+    <div>Veuillez selectionner le nombre de colonnes et lignes de votre labyrinthe:</div>
+    Colonnes: <input id='nbrCol' type="number" min="0" step="1"/>
+    Lignes: <input id='nbrLine' type="number" min="0" step="1"/>
+    <input id='submitGen' type="button" value="Generate"/>
   </form>
-  <button id="export">Export</button>
-  <button id="resolve">Resolve</button>
+  <div id="formExport">
+    <span>Vous pouvez egalement exporter ou un importer un fichier Json:</span>
+    <form id='formLoad' method="post" action="">
+      <input id="fileJson" type='file' accept='text/plain' onchange='openFile(event)'><br>
+      <input id='inputJson' type="text"/>
+      <input id='submitJson' type="button" value="import"/>
+    </form>
+    <button id="export">Export</button>
+    <button id="resolve">Resolve</button>
+    <div id="displayExport">
+      <textarea rows="4" cols="50" id="exportJson"></textarea>
+      <a id="downloadlink" > Telecharger au format Json</a>
+    </div>
+  </div>
+
+  <div id="errorMessage"></div>
   <canvas id="labyrinthe">
-   <span class="ko"><canvas> non supportée !</span>
   </canvas>
+
+  <script type="text/javascript" src="jquery-2.2.4.min.js"></script>
   <script type="text/javascript" src="index.js"></script>
 </body>
 </html>
